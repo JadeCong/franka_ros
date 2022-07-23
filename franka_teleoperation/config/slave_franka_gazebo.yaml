@@ -1,0 +1,5 @@
+slave_franka_gazebo:
+  # Mapping the coordinate system of command pose from touch.
+  pose_mapping: true # default: true
+  # Get franka state form gazebo server.
+  get_franka_state: true # default: true

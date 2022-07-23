@@ -1,0 +1,31 @@
+<launch>
+    
+    <!-- Parameters configuration -->
+    <arg name="robot_ip" default="192.168.2.1" doc="Franka robot communication IP." />
+    <arg name="load_gripper" default="true" doc="Whether load franka gripper." />
+    <arg name="pose_mapping" default="true" doc="Mapping the coordinate system of command pose from touch." />
+    
+    <group ns="franka">
+        <!-- Run real franka control -->
+        <include file="$(find franka_control)/launch/franka_control.launch" >
+            <arg name="robot_ip" value="$(arg robot_ip)" />
+            <arg name="load_gripper" value="$(arg load_gripper)" />
+        </include>
+        
+        <!-- Load franka teleoperation controller -->
+        <!-- <rosparam command="load" file="$(find franka_example_controllers)/config/franka_example_controllers.yaml" />
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_impedance_example_controller"/> -->
+        <rosparam command="load" file="$(find franka_controllers)/config/franka_teleoperation_controller.yaml" />
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="franka_teleoperation_controller" />
+        
+        <!-- Run rviz and update robot states -->
+        <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find franka_teleoperation)/config/franka_teleoperation.rviz" />
+        
+        <!-- Run rqt_reconfigure for controller parameters -->
+        <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
+        
+        <!-- Run master_slave_pose_mapping node -->
+        <include file="$(find franka_teleoperation)/launch/master_slave_pose_mapping.launch" if="$(arg pose_mapping)" />
+    </group>
+    
+</launch>

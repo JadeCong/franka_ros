@@ -1,0 +1,7 @@
+franka_state_publisher_gazebo:
+  # Gazebo service type for calling.
+  gazebo_service_type: /gazebo/get_link_state # default: /gazebo/get_link_state
+  # Get the state of which link/model.
+  franka_object: panda_leftfinger # default: panda_leftfinger
+  # Name of topic for publishing the franka state.
+  franka_state_topic: /gazebo/franka_ee_pose # default: /gazebo/franka_ee_pose

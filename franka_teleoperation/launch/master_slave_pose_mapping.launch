@@ -1,0 +1,9 @@
+<launch>
+    
+    <!-- Run master_slave_pose_mapping node -->
+    <rosparam command="load" file="$(find franka_teleoperation)/config/master_slave_pose_mapping.yaml" />
+    <node name="master_slave_pose_mapping" pkg="franka_teleoperation" type="master_slave_pose_mapping.py" output="screen" respawn="false">
+        <remap from="/franka/slave_franka/command_pose/incremental" to="/franka/franka_teleoperation_controller/equilibrium_pose" />
+    </node>
+    
+</launch>

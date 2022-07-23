@@ -1,0 +1,7 @@
+<launch>
+    
+    <!-- Run franka_state_publisher_gazebo node -->
+    <rosparam command="load" file="$(find franka_teleoperation)/config/franka_state_publisher_gazebo.yaml" />
+    <node name="franka_state_publisher_gazebo" pkg="franka_teleoperation" type="franka_state_publisher_gazebo.py" output="screen" respawn="false" />
+    
+</launch>

@@ -1,0 +1,7 @@
+slave_franka:
+  # Franka robot communication IP.
+  robot_ip: "192.168.2.1" # default: "192.168.2.1"
+  # Whether load franka gripper.
+  load_gripper: true # default: true
+  # Mapping the coordinate system of command pose from touch.
+  pose_mapping: true # default: true
