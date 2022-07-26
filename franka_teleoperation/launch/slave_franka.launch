@@ -13,9 +13,7 @@
         </include>
         
         <!-- Load franka teleoperation controller -->
-        <!-- <rosparam command="load" file="$(find franka_example_controllers)/config/franka_example_controllers.yaml" />
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="cartesian_impedance_example_controller"/> -->
-        <rosparam command="load" file="$(find franka_controllers)/config/franka_teleoperation_controller.yaml" />
+        <rosparam command="load" file="$(find franka_controllers)/config/franka_controllers.yaml" />
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="franka_teleoperation_controller" />
         
         <!-- Run rviz and update robot states -->

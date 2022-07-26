@@ -120,6 +120,7 @@ endif()
 
 generate_dynamic_reconfigure_options(
     cfg/compliance_param.cfg
+    cfg/desired_mass_param.cfg
 )
 
 ###################################
@@ -173,6 +174,9 @@ catkin_package(
 
 add_library(franka_controllers
     src/franka_teleoperation_controller.cpp
+    src/franka_cartesian_impedance_controller.cpp
+    src/franka_cartesian_pose_controller.cpp
+    src/franka_force_controller.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -264,6 +268,7 @@ target_include_directories(franka_controllers PUBLIC
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
 
+## Installation
 install(TARGETS franka_controllers
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
