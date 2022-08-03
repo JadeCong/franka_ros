@@ -10,4 +10,4 @@ master_slave_pose_mapping:
   # Absolute workspace scale of master robot relative to slave robot([x,y,z,rx,ry,rz]).
   absolute_workspace_scale: [4.05, 6.25, 7.125, -1, -1, 1] # default: [4.05, 6.25, 7.125, 1, 1, 1]
   # Incremental workspace scale of master robot relative to slave robot([x,y,z,rx,ry,rz]).
-  incremental_workspace_scale: [0.5, 0.5, 0.5, -0.25, -0.25, 0.25] # default: [1, 1, 1, 1, 1, 1]
+  incremental_workspace_scale: [0.5, 0.5, 0.5, -0.5, -0.5, 0.5] # default: [1, 1, 1, 1, 1, 1]
