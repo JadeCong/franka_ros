@@ -42,13 +42,13 @@ def master_slave_pose_mapping_node():
     slave_command_mode = rospy.get_param("/franka/master_slave_pose_mapping/slave_command_mode")
     if slave_command_mode == "absolute":
         master_command_topic = "/touch/master_touch/command_pose/absolute"
-        workspace_scale = eval(rospy.get_param("/franka/master_slave_pose_mapping/absolute_workspace_scale"))
+        workspace_scale = rospy.get_param("/franka/master_slave_pose_mapping/absolute_workspace_scale")
     elif slave_command_mode == "incremental":
         master_command_topic = "/touch/master_touch/command_pose/incremental"
-        workspace_scale = eval(rospy.get_param("/franka/master_slave_pose_mapping/incremental_workspace_scale"))
+        workspace_scale = rospy.get_param("/franka/master_slave_pose_mapping/incremental_workspace_scale")
     slave_command_content = rospy.get_param("/franka/master_slave_pose_mapping/slave_command_content")
     slave_command_frame_id = rospy.get_param("/franka/master_slave_pose_mapping/slave_command_frame_id")
-    pose_mapping_order = eval(rospy.get_param("/franka/master_slave_pose_mapping/pose_mapping_order"))
+    pose_mapping_order = rospy.get_param("/franka/master_slave_pose_mapping/pose_mapping_order")
     
     # set the command_pose_index and command_pose_scale
     slave_robot_coordinate_index = ['x','y','z','rx','ry','rz']
