@@ -94,9 +94,9 @@ def pose_mapping_callback(msg, args):
     elif temp_command_pose.pose.position.x == -1.0 and temp_command_pose.pose.position.y == -1.0 and temp_command_pose.pose.position.z == -1.0:
         print("Resetting slave robot(Franka Panda/Gripper) and do not do any operation...\n")
         # TODO: reset the slave robot(Franka Panda/Gripper)
-        Popen(["gnome-terminal", '--', 'sh', '-c', "rostopic pub --once /franka/franka_teleoperation_controller/equilibrium_pose geometry_msgs/PoseStamped \
+        Popen(["gnome-terminal", '--', 'sh', '-c', "rostopic pub --once /franka/franka_cartesian_impedance_controller/equilibrium_pose geometry_msgs/PoseStamped \
                 '{header: {seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: 'panda_hand_tcp'}, pose: {position: {x: 0.4, y: 0.0, z: 0.6}, orientation: {x: 1.0, y: 0.0, z: 0.0, w: 0.0}}}'"])
-        time.sleep(5)  # wait 5 seconds for accomplishment of resetting the slave robot
+        time.sleep(10)  # wait 10 seconds for accomplishment of resetting the slave robot
         args[7] = get_franka_pose()
         print("Reset slave robot done and recovering to command mode...\n")
         return

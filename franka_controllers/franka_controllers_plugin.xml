@@ -1,9 +1,4 @@
 <library path="lib/libfranka_controllers">
-    <class name="franka_controllers/FrankaTeleoperationController" type="franka_controllers::FrankaTeleoperationController" base_class_type="controller_interface::ControllerBase">
-        <description>
-            A controller that renders a spring damper system in cartesian space for teleoperation. Compliance parameters and the equilibrium pose can be modified online with dynamic reconfigure and an interactive marker respectively.
-        </description>
-    </class>
     <class name="franka_controllers/FrankaCartesianImpedanceController" type="franka_controllers::FrankaCartesianImpedanceController" base_class_type="controller_interface::ControllerBase">
         <description>
             A controller that renders a spring damper system in cartesian space. Compliance parameters and the equilibrium pose can be modified online with dynamic reconfigure and an interactive marker respectively.
@@ -12,6 +7,26 @@
     <class name="franka_controllers/FrankaCartesianPoseController" type="franka_controllers::FrankaCartesianPoseController" base_class_type="controller_interface::ControllerBase">
         <description>
             A controller that executes a short motion based on cartesian poses to demonstrate correct usage.
+        </description>
+    </class>
+    <class name="franka_controllers/FrankaCartesianVelocityController" type="franka_controllers::FrankaCartesianVelocityController" base_class_type="controller_interface::ControllerBase">
+        <description>
+            A controller that executes a short motion based on cartesian velocities to demonstrate correct usage.
+        </description>
+    </class>
+    <class name="franka_controllers/FrankaJointImpedanceController" type="franka_controllers::FrankaJointImpedanceController" base_class_type="controller_interface::ControllerBase">
+        <description>
+            A controller that tracks a cartesian path with a joint impedance controller that compensates coriolis torques. The torque commands are compared to measured torques in Console outputs.
+        </description>
+    </class>
+    <class name="franka_controllers/FrankaJointPositionController" type="franka_controllers::FrankaJointPositionController" base_class_type="controller_interface::ControllerBase">
+        <description>
+            A controller that executes a short motion based on joint positions to demonstrate correct usage.
+        </description>
+    </class>
+    <class name="franka_controllers/FrankaJointVelocityController" type="franka_controllers::FrankaJointVelocityController" base_class_type="controller_interface::ControllerBase">
+        <description>
+            A controller that executes a short motion based on joint velocities to demonstrate correct usage.
         </description>
     </class>
     <class name="franka_controllers/FrankaForceController" type="franka_controllers::FrankaForceController" base_class_type="controller_interface::ControllerBase">

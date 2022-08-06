@@ -77,6 +77,9 @@ endif()
 #   Message1.msg
 #   Message2.msg
 # )
+add_message_files(FILES
+    JointTorqueComparison.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -97,6 +100,7 @@ endif()
 #   DEPENDENCIES
 #   std_msgs  # Or other packages containing msgs
 # )
+generate_messages()
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -173,9 +177,12 @@ catkin_package(
 # )
 
 add_library(franka_controllers
-    src/franka_teleoperation_controller.cpp
     src/franka_cartesian_impedance_controller.cpp
     src/franka_cartesian_pose_controller.cpp
+    src/franka_cartesian_velocity_controller.cpp
+    src/franka_joint_impedance_controller.cpp
+    src/franka_joint_position_controller.cpp
+    src/franka_joint_velocity_controller.cpp
     src/franka_force_controller.cpp
 )
 

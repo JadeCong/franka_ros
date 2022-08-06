@@ -4,7 +4,18 @@
 
 > 功能：针对Franka Panda机器人的自定义控制器。<br>
 > 启动：
->> (1)主从遥操作控制器（franka_teleoperation_controller）：roslaunch franka_controllers franka_teleoperation_controller.launch <br>
+>> (1)笛卡尔空间控制器：
+>>>- 阻抗控制器：roslaunch franka_controllers franka_cartesian_impedance_controller.launch
+>>>- 位姿控制器：roslaunch franka_controllers franka_cartesian_pose_controller.launch
+>>>- 速度控制器：roslaunch franka_controllers franka_cartesian_velocity_controller.launch
+>>
+>> (2)关节空间控制器：
+>>>- 阻抗控制器：roslaunch franka_controllers franka_joint_impedance_controller.launch
+>>>- 位置控制器：roslaunch franka_controllers franka_joint_position_controller.launch
+>>>- 速度控制器：roslaunch franka_controllers franka_joint_velocity_controller.launch
+>>
+>> (3)C空间控制器：
+>>>- 力控制器：roslaunch franka_controllers franka_force_controller.launch
 
 ## 2. Package franka_teleoperation
 
