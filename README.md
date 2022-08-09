@@ -16,6 +16,7 @@
 >>
 >> (3)C空间控制器：
 >>>- 力控制器：roslaunch franka_controllers franka_force_controller.launch
+>>>- 力示教控制器：roslaunch franka_controllers franka_force_teaching_controller.launch
 
 ## 2. Package franka_teleoperation
 

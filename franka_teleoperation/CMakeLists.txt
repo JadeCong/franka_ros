@@ -7,7 +7,14 @@ project(franka_teleoperation)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS gazebo_msgs)
+find_package(catkin REQUIRED COMPONENTS
+    dynamic_reconfigure
+    roscpp
+    rospy
+    gazebo_plugins
+    gazebo_msgs
+    pluginlib
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -16,7 +23,7 @@ find_package(catkin REQUIRED COMPONENTS gazebo_msgs)
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
-# catkin_python_setup()
+catkin_python_setup()
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -88,6 +95,9 @@ find_package(catkin REQUIRED COMPONENTS gazebo_msgs)
 #   cfg/DynReconf1.cfg
 #   cfg/DynReconf2.cfg
 # )
+generate_dynamic_reconfigure_options(
+    cfg/workspace_scale_param.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -99,9 +109,15 @@ find_package(catkin REQUIRED COMPONENTS gazebo_msgs)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES franka_teleoperation
-#  CATKIN_DEPENDS other_catkin_pkg
+    # INCLUDE_DIRS include
+    LIBRARIES franka_teleoperation
+    CATKIN_DEPENDS
+        dynamic_reconfigure
+        roscpp
+        rospy
+        gazebo_plugins
+        gazebo_msgs
+        pluginlib
 #  DEPENDS system_lib
 )
 
@@ -113,7 +129,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-# ${catkin_INCLUDE_DIRS}
+    ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -159,6 +175,10 @@ include_directories(
 #   scripts/my_python_script
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
+install(
+    PROGRAMS srcipts/master_slave_pose_mapping.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
@@ -180,6 +200,10 @@ include_directories(
 #   FILES_MATCHING PATTERN "*.h"
 #   PATTERN ".svn" EXCLUDE
 # )
+install(
+    DIRECTORY cfg
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES

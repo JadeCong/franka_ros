@@ -184,6 +184,7 @@ add_library(franka_controllers
     src/franka_joint_position_controller.cpp
     src/franka_joint_velocity_controller.cpp
     src/franka_force_controller.cpp
+    src/franka_force_teaching_controller.cpp
 )
 
 ## Add cmake target dependencies of the library

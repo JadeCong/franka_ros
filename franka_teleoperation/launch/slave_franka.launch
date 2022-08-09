@@ -19,7 +19,7 @@
         <!-- Run rviz and update robot states -->
         <node name="rviz" pkg="rviz" type="rviz" output="screen" args="-d $(find franka_teleoperation)/config/franka_teleoperation.rviz" />
         
-        <!-- Run rqt_reconfigure for controller parameters -->
+        <!-- Run rqt_reconfigure for controller and pose mapping parameters -->
         <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
         
         <!-- Run master_slave_pose_mapping node -->

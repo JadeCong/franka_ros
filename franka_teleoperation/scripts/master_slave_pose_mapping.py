@@ -4,6 +4,8 @@ import sys, os, time
 from subprocess import call, Popen, PIPE
 
 import rospy
+from dynamic_reconfigure.server import Server
+from franka_teleoperation.cfg import workspace_scale_paramConfig
 import tf.transformations
 from geometry_msgs.msg import PoseStamped
 from franka_msgs.msg import FrankaState
@@ -12,6 +14,25 @@ from std_msgs.msg import Float64
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 
+
+# define the command_pose_index, command_pose_scale and slave_command_mode
+slave_command_mode = None
+command_pose_index, command_pose_scale = [], []
+
+
+def dynamic_reconfigure_workspace_scale_param_callback(config, level):
+    # declare the global variables
+    global slave_command_mode, command_pose_scale
+    
+    # check the slave_command_mode(command_pose_scale order: ['x','y','z','rx','ry','rz'])
+    if slave_command_mode == "absolute":
+        command_pose_scale = [config.absolute_workspace_scale_x, config.absolute_workspace_scale_y, config.absolute_workspace_scale_z, 
+                              config.absolute_workspace_scale_rx, config.absolute_workspace_scale_ry, config.absolute_workspace_scale_rz]
+    elif slave_command_mode == "incremental":
+        command_pose_scale = [config.incremental_workspace_scale_x, config.incremental_workspace_scale_y, config.incremental_workspace_scale_z, 
+                              config.incremental_workspace_scale_rx, config.incremental_workspace_scale_ry, config.incremental_workspace_scale_rz]
+    
+    return config
 
 def get_franka_pose():
     # get the state of franka
@@ -34,57 +55,10 @@ def get_franka_pose():
     
     return franka_pose
 
-def master_slave_pose_mapping_node():
-    # init ros node
-    rospy.init_node("master_slave_pose_mapping", anonymous=True)
-    
-    # get ros parameters from parameter server
-    slave_command_mode = rospy.get_param("/franka/master_slave_pose_mapping/slave_command_mode")
-    if slave_command_mode == "absolute":
-        master_command_topic = "/touch/master_touch/command_pose/absolute"
-        workspace_scale = rospy.get_param("/franka/master_slave_pose_mapping/absolute_workspace_scale")
-    elif slave_command_mode == "incremental":
-        master_command_topic = "/touch/master_touch/command_pose/incremental"
-        workspace_scale = rospy.get_param("/franka/master_slave_pose_mapping/incremental_workspace_scale")
-    slave_command_content = rospy.get_param("/franka/master_slave_pose_mapping/slave_command_content")
-    slave_command_frame_id = rospy.get_param("/franka/master_slave_pose_mapping/slave_command_frame_id")
-    pose_mapping_order = rospy.get_param("/franka/master_slave_pose_mapping/pose_mapping_order")
-    
-    # set the command_pose_index and command_pose_scale
-    slave_robot_coordinate_index = ['x','y','z','rx','ry','rz']
-    command_pose_index, command_pose_scale = [], []
-    for idx in range(len(pose_mapping_order)):
-        if 'r' not in pose_mapping_order[idx]:
-            command_pose_index.append(pose_mapping_order[idx])
-        elif 'r' in pose_mapping_order[idx]:
-            command_pose_index.append(pose_mapping_order[idx].strip('r'))
-    for item in slave_robot_coordinate_index:
-        command_pose_scale.append(workspace_scale[pose_mapping_order.index(item)])
-    
-    # set the salve robot(Franka) config pose for teleoperation in incremental command mode
-    slave_teleop_config_pose = PoseStamped()
-    slave_teleop_config_pose = get_franka_pose()
-    slave_teleop_config_flag = False
-    
-    # define the publisher and msgs for slave pose command
-    if slave_command_mode == "absolute":
-        pub_command_pose = rospy.Publisher("/franka/slave_franka/command_pose/absolute", PoseStamped, queue_size=1)
-    elif slave_command_mode == "incremental":
-        pub_command_pose = rospy.Publisher("/franka/slave_franka/command_pose/incremental", PoseStamped, queue_size=1)
-    command_pose = PoseStamped()
-    
-    # define the subscriber for getting command pose from master touch(tip)
-    sub_command_pose = rospy.Subscriber(master_command_topic, PoseStamped, 
-                                        callback=pose_mapping_callback, 
-                                        callback_args=[pub_command_pose, command_pose, slave_command_mode, slave_command_content, slave_command_frame_id, command_pose_index, command_pose_scale, slave_teleop_config_pose, slave_teleop_config_flag], 
-                                        queue_size=1)
-    
-    # spin() simply keeps python from exiting until this node is stopped
-    rospy.spin()
-
 def pose_mapping_callback(msg, args):
-    # get the command_pose msgs
+    # get the command_pose msgs and command_pose_scale dynamic parameters
     temp_command_pose = msg
+    args[6] = command_pose_scale
     
     # update the slave robot(Franka) config pose for teleoperation for once if the touch button is pressed, otherwise keep the last saved one(in incremental mode)
     if temp_command_pose.pose.position.x == 0.0 and temp_command_pose.pose.position.y == 0.0 and temp_command_pose.pose.position.z == 0.0:
@@ -186,7 +160,59 @@ def pose_mapping_callback(msg, args):
     
     # publish the command_pose msgs
     args[0].publish(args[1])
-    # print("WTF")
+
+def master_slave_pose_mapping_node():
+    # declare the global variables
+    global slave_command_mode, command_pose_index, command_pose_scale
+    
+    # init ros node
+    rospy.init_node("master_slave_pose_mapping", anonymous=True)
+    
+    # get ros parameters from parameter server
+    slave_command_mode = rospy.get_param("/franka/master_slave_pose_mapping/slave_command_mode")
+    if slave_command_mode == "absolute":
+        master_command_topic = "/touch/master_touch/command_pose/absolute"
+        workspace_scale = rospy.get_param("/franka/master_slave_pose_mapping/absolute_workspace_scale")
+    elif slave_command_mode == "incremental":
+        master_command_topic = "/touch/master_touch/command_pose/incremental"
+        workspace_scale = rospy.get_param("/franka/master_slave_pose_mapping/incremental_workspace_scale")
+    slave_command_content = rospy.get_param("/franka/master_slave_pose_mapping/slave_command_content")
+    slave_command_frame_id = rospy.get_param("/franka/master_slave_pose_mapping/slave_command_frame_id")
+    pose_mapping_order = rospy.get_param("/franka/master_slave_pose_mapping/pose_mapping_order")
+    
+    # set the command_pose_index and command_pose_scale
+    slave_robot_coordinate_index = ['x','y','z','rx','ry','rz']
+    for idx in range(len(pose_mapping_order)):
+        if 'r' not in pose_mapping_order[idx]:
+            command_pose_index.append(pose_mapping_order[idx])
+        elif 'r' in pose_mapping_order[idx]:
+            command_pose_index.append(pose_mapping_order[idx].strip('r'))
+    for item in slave_robot_coordinate_index:
+        command_pose_scale.append(workspace_scale[pose_mapping_order.index(item)])
+    
+    # start the dynamic reconfigure parameter server
+    dynamic_reconfigure_parameter_server = Server(workspace_scale_paramConfig, dynamic_reconfigure_workspace_scale_param_callback)
+    
+    # set the salve robot(Franka) config pose for teleoperation in incremental command mode
+    slave_teleop_config_pose = PoseStamped()
+    slave_teleop_config_pose = get_franka_pose()
+    slave_teleop_config_flag = False
+    
+    # define the publisher and msgs for slave pose command
+    if slave_command_mode == "absolute":
+        pub_command_pose = rospy.Publisher("/franka/slave_franka/command_pose/absolute", PoseStamped, queue_size=1)
+    elif slave_command_mode == "incremental":
+        pub_command_pose = rospy.Publisher("/franka/slave_franka/command_pose/incremental", PoseStamped, queue_size=1)
+    command_pose = PoseStamped()
+    
+    # define the subscriber for getting command pose from master touch(tip)
+    sub_command_pose = rospy.Subscriber(master_command_topic, PoseStamped, 
+                                        callback=pose_mapping_callback, 
+                                        callback_args=[pub_command_pose, command_pose, slave_command_mode, slave_command_content, slave_command_frame_id, command_pose_index, command_pose_scale, slave_teleop_config_pose, slave_teleop_config_flag], 
+                                        queue_size=1)
+    
+    # spin() simply keeps python from exiting until this node is stopped
+    rospy.spin()
 
 
 if __name__ == "__main__":
