@@ -1,4 +1,4 @@
-#include <franka_controllers/franka_force_controller.h>
+#include <franka_controllers/franka_force_teaching_controller.h>
 
 #include <cmath>
 #include <memory>
@@ -11,27 +11,27 @@
 
 namespace franka_controllers {
 
-bool FrankaForceController::init(hardware_interface::RobotHW* robot_hw,
+bool FrankaForceTeachingController::init(hardware_interface::RobotHW* robot_hw,
                                   ros::NodeHandle& node_handle) {
   std::vector<std::string> joint_names;
   std::string arm_id;
   ROS_WARN(
-      "FrankaForceController: Make sure your robot's endeffector is in contact "
+      "FrankaForceTeachingController: Make sure your robot's endeffector is in contact "
       "with a horizontal surface before starting the controller!");
   if (!node_handle.getParam("arm_id", arm_id)) {
-    ROS_ERROR("FrankaForceController: Could not read parameter arm_id");
+    ROS_ERROR("FrankaForceTeachingController: Could not read parameter arm_id");
     return false;
   }
   if (!node_handle.getParam("joint_names", joint_names) || joint_names.size() != 7) {
     ROS_ERROR(
-        "FrankaForceController: Invalid or no joint_names parameters provided, aborting "
+        "FrankaForceTeachingController: Invalid or no joint_names parameters provided, aborting "
         "controller init!");
     return false;
   }
 
   auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
   if (model_interface == nullptr) {
-    ROS_ERROR_STREAM("FrankaForceController: Error getting model interface from hardware");
+    ROS_ERROR_STREAM("FrankaForceTeachingController: Error getting model interface from hardware");
     return false;
   }
   try {
@@ -39,13 +39,13 @@ bool FrankaForceController::init(hardware_interface::RobotHW* robot_hw,
         model_interface->getHandle(arm_id + "_model"));
   } catch (hardware_interface::HardwareInterfaceException& ex) {
     ROS_ERROR_STREAM(
-        "FrankaForceController: Exception getting model handle from interface: " << ex.what());
+        "FrankaForceTeachingController: Exception getting model handle from interface: " << ex.what());
     return false;
   }
 
   auto* state_interface = robot_hw->get<franka_hw::FrankaStateInterface>();
   if (state_interface == nullptr) {
-    ROS_ERROR_STREAM("FrankaForceController: Error getting state interface from hardware");
+    ROS_ERROR_STREAM("FrankaForceTeachingController: Error getting state interface from hardware");
     return false;
   }
   try {
@@ -53,20 +53,20 @@ bool FrankaForceController::init(hardware_interface::RobotHW* robot_hw,
         state_interface->getHandle(arm_id + "_robot"));
   } catch (hardware_interface::HardwareInterfaceException& ex) {
     ROS_ERROR_STREAM(
-        "FrankaForceController: Exception getting state handle from interface: " << ex.what());
+        "FrankaForceTeachingController: Exception getting state handle from interface: " << ex.what());
     return false;
   }
 
   auto* effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
   if (effort_joint_interface == nullptr) {
-    ROS_ERROR_STREAM("FrankaForceController: Error getting effort joint interface from hardware");
+    ROS_ERROR_STREAM("FrankaForceTeachingController: Error getting effort joint interface from hardware");
     return false;
   }
   for (size_t i = 0; i < 7; ++i) {
     try {
       joint_handles_.push_back(effort_joint_interface->getHandle(joint_names[i]));
     } catch (const hardware_interface::HardwareInterfaceException& ex) {
-      ROS_ERROR_STREAM("FrankaForceController: Exception getting joint handles: " << ex.what());
+      ROS_ERROR_STREAM("FrankaForceTeachingController: Exception getting joint handles: " << ex.what());
       return false;
     }
   }
@@ -78,12 +78,12 @@ bool FrankaForceController::init(hardware_interface::RobotHW* robot_hw,
 
       dynamic_reconfigure_desired_mass_param_node_);
   dynamic_server_desired_mass_param_->setCallback(
-      boost::bind(&FrankaForceController::desiredMassParamCallback, this, _1, _2));
+      boost::bind(&FrankaForceTeachingController::desiredMassParamCallback, this, _1, _2));
 
   return true;
 }
 
-void FrankaForceController::starting(const ros::Time& /*time*/) {
+void FrankaForceTeachingController::starting(const ros::Time& /*time*/) {
   franka::RobotState robot_state = state_handle_->getRobotState();
   std::array<double, 7> gravity_array = model_handle_->getGravity();
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_J.data());
@@ -93,7 +93,7 @@ void FrankaForceController::starting(const ros::Time& /*time*/) {
   tau_error_.setZero();
 }
 
-void FrankaForceController::update(const ros::Time& /*time*/, const ros::Duration& period) {
+void FrankaForceTeachingController::update(const ros::Time& /*time*/, const ros::Duration& period) {
   franka::RobotState robot_state = state_handle_->getRobotState();
   std::array<double, 42> jacobian_array =
       model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
@@ -125,7 +125,7 @@ void FrankaForceController::update(const ros::Time& /*time*/, const ros::Duratio
   k_i_ = filter_gain_ * target_k_i_ + (1 - filter_gain_) * k_i_;
 }
 
-void FrankaForceController::desiredMassParamCallback(
+void FrankaForceTeachingController::desiredMassParamCallback(
     franka_controllers::desired_mass_paramConfig& config,
     uint32_t /*level*/) {
   target_mass_ = config.desired_mass;
@@ -133,7 +133,7 @@ void FrankaForceController::desiredMassParamCallback(
   target_k_i_ = config.k_i;
 }
 
-Eigen::Matrix<double, 7, 1> FrankaForceController::saturateTorqueRate(
+Eigen::Matrix<double, 7, 1> FrankaForceTeachingController::saturateTorqueRate(
     const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
     const Eigen::Matrix<double, 7, 1>& tau_J_d) {  // NOLINT (readability-identifier-naming)
   Eigen::Matrix<double, 7, 1> tau_d_saturated{};
@@ -146,5 +146,5 @@ Eigen::Matrix<double, 7, 1> FrankaForceController::saturateTorqueRate(
 
 }  // namespace franka_controllers
 
-PLUGINLIB_EXPORT_CLASS(franka_controllers::FrankaForceController,
+PLUGINLIB_EXPORT_CLASS(franka_controllers::FrankaForceTeachingController,
                        controller_interface::ControllerBase)

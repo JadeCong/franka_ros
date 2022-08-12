@@ -18,7 +18,7 @@
 
 namespace franka_controllers {
 
-class FrankaForceController : public controller_interface::MultiInterfaceController<
+class FrankaForceTeachingController : public controller_interface::MultiInterfaceController<
                                    franka_hw::FrankaModelInterface,
                                    hardware_interface::EffortJointInterface,
                                    franka_hw::FrankaStateInterface> {
