@@ -50,7 +50,7 @@ if __name__ == "__main__":
     
     wait_for_initial_pose()
     
-    pose_pub = rospy.Publisher("equilibrium_pose", PoseStamped, queue_size=10)
+    pose_pub = rospy.Publisher("equilibrium_pose", PoseStamped, queue_size=1, tcp_nodelay=True, latch=False)
     server = InteractiveMarkerServer("equilibrium_pose_marker")
     int_marker = InteractiveMarker()
     int_marker.header.frame_id = link_name

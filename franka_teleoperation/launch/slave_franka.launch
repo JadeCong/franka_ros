@@ -12,7 +12,7 @@
             <arg name="load_gripper" value="$(arg load_gripper)" />
         </include>
         
-        <!-- Load franka teleoperation controller -->
+        <!-- Load franka controller for teleoperation -->
         <rosparam command="load" file="$(find franka_controllers)/config/franka_controllers.yaml" />
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="franka_cartesian_impedance_controller" />
         

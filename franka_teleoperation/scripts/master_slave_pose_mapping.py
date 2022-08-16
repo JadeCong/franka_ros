@@ -69,7 +69,7 @@ def pose_mapping_callback(msg, args):
         print("Resetting slave robot(Franka Panda/Gripper) and do not do any operation...\n")
         # TODO: reset the slave robot(Franka Panda/Gripper)
         Popen(["gnome-terminal", '--', 'sh', '-c', "rostopic pub --once /franka/franka_cartesian_impedance_controller/equilibrium_pose geometry_msgs/PoseStamped \
-                '{header: {seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: 'panda_hand_tcp'}, pose: {position: {x: 0.4, y: 0.0, z: 0.6}, orientation: {x: 1.0, y: 0.0, z: 0.0, w: 0.0}}}'"])
+                '{header: {seq: 0, stamp: {secs: 0, nsecs: 0}, frame_id: 'panda_hand_tcp'}, pose: {position: {x: 0.5, y: 0.0, z: 0.5}, orientation: {x: 1.0, y: 0.0, z: 0.0, w: 0.0}}}'"])
         time.sleep(10)  # wait 10 seconds for accomplishment of resetting the slave robot
         args[7] = get_franka_pose()
         print("Reset slave robot done and recovering to command mode...\n")
@@ -200,16 +200,17 @@ def master_slave_pose_mapping_node():
     
     # define the publisher and msgs for slave pose command
     if slave_command_mode == "absolute":
-        pub_command_pose = rospy.Publisher("/franka/slave_franka/command_pose/absolute", PoseStamped, queue_size=1)
+        pub_command_pose = rospy.Publisher("/franka/slave_franka/command_pose/absolute", PoseStamped, queue_size=1, tcp_nodelay=True, latch=False)
     elif slave_command_mode == "incremental":
-        pub_command_pose = rospy.Publisher("/franka/slave_franka/command_pose/incremental", PoseStamped, queue_size=1)
+        pub_command_pose = rospy.Publisher("/franka/slave_franka/command_pose/incremental", PoseStamped, queue_size=1, tcp_nodelay=True, latch=False)
     command_pose = PoseStamped()
     
     # define the subscriber for getting command pose from master touch(tip)
     sub_command_pose = rospy.Subscriber(master_command_topic, PoseStamped, 
                                         callback=pose_mapping_callback, 
                                         callback_args=[pub_command_pose, command_pose, slave_command_mode, slave_command_content, slave_command_frame_id, command_pose_index, command_pose_scale, slave_teleop_config_pose, slave_teleop_config_flag], 
-                                        queue_size=1)
+                                        queue_size=1, 
+                                        tcp_nodelay=True)
     
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()

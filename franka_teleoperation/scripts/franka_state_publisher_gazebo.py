@@ -19,7 +19,7 @@ def franka_state_publisher_gazebo_node():
     franka_state_topic = rospy.get_param("/franka_state_publisher_gazebo/franka_state_topic")
     
     # define the publisher and msgs for franka state
-    pub_franka_state = rospy.Publisher(franka_state_topic, PoseStamped, queue_size=1)
+    pub_franka_state = rospy.Publisher(franka_state_topic, PoseStamped, queue_size=1, tcp_nodelay=True, latch=False)
     franka_ee_pose = PoseStamped()
     
     # define the service proxy for getting franka_ee_pose
