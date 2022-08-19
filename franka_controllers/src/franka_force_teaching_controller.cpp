@@ -68,7 +68,9 @@ bool FrankaForceTeachingController::init(hardware_interface::RobotHW* robot_hw, 
         }
     }
     
-    sub_hand_force_ = node_handle.subscribe("/hand/slave_hand/feedback_force", 1, &FrankaForceTeachingController::handForceCallback, this, ros::TransportHints().reliable().tcpNoDelay());
+    std::string hand_force_topic;
+    node_handle.getParam("/manual_force_teaching/controller_spawner/hand_force_topic", hand_force_topic);
+    sub_hand_force_ = node_handle.subscribe(hand_force_topic, 1, &FrankaForceTeachingController::handForceCallback, this, ros::TransportHints().reliable().tcpNoDelay());
     
     dynamic_reconfigure_hand_force_scale_param_node_ = ros::NodeHandle("dynamic_reconfigure_hand_force_scale_param_node");
     dynamic_server_hand_force_scale_param_ = std::make_unique<dynamic_reconfigure::Server<franka_controllers::hand_force_scale_paramConfig>>(dynamic_reconfigure_hand_force_scale_param_node_);
