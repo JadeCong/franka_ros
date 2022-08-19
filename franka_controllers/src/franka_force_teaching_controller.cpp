@@ -68,7 +68,7 @@ bool FrankaForceTeachingController::init(hardware_interface::RobotHW* robot_hw, 
         }
     }
     
-    sub_hand_force_ = node_handle.subscribe("/hand/hand_force", 1, &FrankaForceTeachingController::handForceCallback, this, ros::TransportHints().reliable().tcpNoDelay());
+    sub_hand_force_ = node_handle.subscribe("/hand/slave_hand/feedback_force", 1, &FrankaForceTeachingController::handForceCallback, this, ros::TransportHints().reliable().tcpNoDelay());
     
     dynamic_reconfigure_hand_force_scale_param_node_ = ros::NodeHandle("dynamic_reconfigure_hand_force_scale_param_node");
     dynamic_server_hand_force_scale_param_ = std::make_unique<dynamic_reconfigure::Server<franka_controllers::hand_force_scale_paramConfig>>(dynamic_reconfigure_hand_force_scale_param_node_);
@@ -78,9 +78,10 @@ bool FrankaForceTeachingController::init(hardware_interface::RobotHW* robot_hw, 
 }
 
 void FrankaForceTeachingController::starting(const ros::Time& /*time*/) {
+    // Get the current state(joint torque/gravity) of the robot
     franka::RobotState robot_state = state_handle_->getRobotState();
     std::array<double, 7> gravity_array = model_handle_->getGravity();
-    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_J.data());
+    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_J.data());  // without gravity and friction
     Eigen::Map<Eigen::Matrix<double, 7, 1>> gravity(gravity_array.data());
     // Bias correction for the current external torque
     tau_ext_initial_ = tau_measured - gravity;
@@ -88,31 +89,35 @@ void FrankaForceTeachingController::starting(const ros::Time& /*time*/) {
 }
 
 void FrankaForceTeachingController::update(const ros::Time& /*time*/, const ros::Duration& period) {
+    // Get the current state of the robot
     franka::RobotState robot_state = state_handle_->getRobotState();
     std::array<double, 42> jacobian_array = model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
     std::array<double, 7> gravity_array = model_handle_->getGravity();
     Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
-    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_J.data());
+    Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_measured(robot_state.tau_J.data());  // without gravity and friction
     Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data());  // NOLINT (readability-identifier-naming)
     Eigen::Map<Eigen::Matrix<double, 7, 1>> gravity(gravity_array.data());
     
-    Eigen::Matrix<double, 7, 1> tau_d, tau_cmd, tau_ext;
+    // Calculate the tau_d, tau_ext and tau_error_
+    Eigen::Matrix<double, 7, 1> tau_d, tau_ext, tau_cmd;
     Eigen::Matrix<double, 6, 1> desired_force_torque;
     desired_force_torque.setZero();
-    desired_force_torque(2) = desired_mass_ * -9.81;
-    tau_ext = tau_measured - gravity - tau_ext_initial_;
+    // TODO: set the desired_force_torque
+    desired_force_torque << hand_force_, hand_torque_;  // set the cartesian force/torque in franka base coordinate system
     tau_d = jacobian.transpose() * desired_force_torque;
+    tau_ext = tau_measured - gravity - tau_ext_initial_;
     tau_error_ = tau_error_ + period.toSec() * (tau_d - tau_ext);
     // FF + PI control (PI gains are initially all 0)
     tau_cmd = tau_d + k_p_ * (tau_d - tau_ext) + k_i_ * tau_error_;
     tau_cmd = saturateTorqueRate(tau_cmd, tau_J_d);
-    
+    // Send the tau_cmd to the robot for control
     for (size_t i = 0; i < 7; ++i) {
         joint_handles_[i].setCommand(tau_cmd(i));
     }
     
     // Update signals changed online through dynamic reconfigure
-    desired_mass_ = filter_gain_ * target_mass_ + (1 - filter_gain_) * desired_mass_;
+    hand_force_scale_ = filter_gain_ * target_hand_force_scale_ + (1 - filter_gain_) * hand_force_scale_;
+    hand_torque_scale_ = filter_gain_ * target_hand_torque_scale_ + (1 - filter_gain_) * hand_torque_scale_;
     k_p_ = filter_gain_ * target_k_p_ + (1 - filter_gain_) * k_p_;
     k_i_ = filter_gain_ * target_k_i_ + (1 - filter_gain_) * k_i_;
 }
@@ -124,13 +129,15 @@ void FrankaForceTeachingController::stopping(const ros::Time& /*time*/) {
 }
 
 void FrankaForceTeachingController::handForceCallback(const geometry_msgs::WrenchStampedConstPtr& msg) {
-    hand_force_ = {msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z};
-    hand_torque_ = {msg->wrench.torque.x, msg->wrench.torque.y, msg->wrench.torque.z};
+    hand_force_ << hand_force_scale_(0) * msg->wrench.force.x, hand_force_scale_(1) * msg->wrench.force.y, hand_force_scale_(2) * msg->wrench.force.z;
+    hand_torque_ << hand_torque_scale_(0) * msg->wrench.torque.x, hand_torque_scale_(1) * msg->wrench.torque.y, hand_torque_scale_(2) * msg->wrench.torque.z;
 }
 
 void FrankaForceTeachingController::handForceScaleParamCallback(franka_controllers::hand_force_scale_paramConfig& config, uint32_t /*level*/) {
-    hand_force_scale_ = {config.hand_force_scale_x, config.hand_force_scale_y, config.hand_force_scale_z};
-    hand_torque_scale_ = {config.hand_torque_scale_x, config.hand_torque_scale_y, config.hand_torque_scale_z};
+    target_hand_force_scale_ << config.hand_force_scale_x, config.hand_force_scale_y, config.hand_force_scale_z;
+    target_hand_torque_scale_ << config.hand_torque_scale_x, config.hand_torque_scale_y, config.hand_torque_scale_z;
+    target_k_p_ = config.k_p;
+    target_k_i_ = config.k_i;
 }
 
 Eigen::Matrix<double, 7, 1> FrankaForceTeachingController::saturateTorqueRate(const Eigen::Matrix<double, 7, 1>& tau_d_calculated, const Eigen::Matrix<double, 7, 1>& tau_J_d) {  // NOLINT (readability-identifier-naming)

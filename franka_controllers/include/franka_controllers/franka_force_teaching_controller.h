@@ -39,8 +39,6 @@ class FrankaForceTeachingController : public controller_interface::MultiInterfac
         std::vector<hardware_interface::JointHandle> joint_handles_;
         
         // Robot parameters
-        double desired_mass_{0.0};
-        double target_mass_{0.0};
         double k_p_{0.0};
         double k_i_{0.0};
         double target_k_p_{0.0};
@@ -51,12 +49,14 @@ class FrankaForceTeachingController : public controller_interface::MultiInterfac
         static constexpr double kDeltaTauMax{1.0};
         
         // Hand force/torque
-        Eigen::Vector3d hand_force_;
-        Eigen::Vector3d hand_torque_;
+        Eigen::Vector3d hand_force_{0.0, 0.0, 0.0};
+        Eigen::Vector3d hand_torque_{0.0, 0.0, 0.0};
         
         // Hand force/torque scale
-        Eigen::Vector3d hand_force_scale_;
-        Eigen::Vector3d hand_torque_scale_;
+        Eigen::Vector3d hand_force_scale_{1.0, 1.0, 1.0};
+        Eigen::Vector3d hand_torque_scale_{1.0, 1.0, 1.0};
+        Eigen::Vector3d target_hand_force_scale_{1.0, 1.0, 1.0};
+        Eigen::Vector3d target_hand_torque_scale_{1.0, 1.0, 1.0};
         
         // Hand force/torque subscriber
         ros::Subscriber sub_hand_force_;
