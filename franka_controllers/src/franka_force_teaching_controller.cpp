@@ -106,6 +106,8 @@ void FrankaForceTeachingController::update(const ros::Time& /*time*/, const ros:
     desired_force_torque.setZero();
     // TODO: set the desired_force_torque
     desired_force_torque << hand_force_, hand_torque_;  // set the cartesian force/torque in franka base coordinate system
+    desired_force_torque(1) = -desired_force_torque(1);
+    desired_force_torque(2) = -desired_force_torque(2) + 0.185 * 2 * 9.81;  // compensation for two finger gravity(each finger mass is 0.1179/0.1386/0.1565kg), maybe the bigger value is fine
     tau_d = jacobian.transpose() * desired_force_torque;
     tau_ext = tau_measured - gravity - tau_ext_initial_;
     tau_error_ = tau_error_ + period.toSec() * (tau_d - tau_ext);
